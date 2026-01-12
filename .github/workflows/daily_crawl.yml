@@ -1,0 +1,35 @@
+name: Daily Crawl & Deploy
+
+on:
+  schedule:
+    - cron: '0 21 * * *' # 한국 시간 오전 6시 (UTC 21:00)
+  workflow_dispatch: # 수동 실행 버튼
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Python Dependencies
+        run: |
+          pip install requests beautifulsoup4
+
+      - name: Run Crawler
+        run: python scripts/crawler.py
+
+      - name: Commit Data
+        run: |
+          git config --global user.name 'DailyBot'
+          git config --global user.email 'bot@noreply.github.com'
+          git add public/data.json
+          git commit -m "Update Daily Reviews" || echo "No changes to commit"
+          git push
